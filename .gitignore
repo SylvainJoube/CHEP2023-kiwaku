@@ -1,0 +1,27 @@
+.vscode
+
+generators/code/basic_example_saved.cpp
+*.cobench
+old_plots
+out
+generators/code/results/anciens*
+
+exe
+
+build
+
+atlas.cvf
+no_kwk _no_optim
+
+*.exe
+
+img_out
+
+mdsync_tests
+
+markdeep-slides
+
+tuto_sycl_intel
+
+.ipynb_checkpoints
+__pycache__
