@@ -133,3 +133,49 @@ def filter_outliers(list):
       index += 1
 
   return list
+
+
+def remove_newline(list):
+  if (len(list) == 1) and (list[0] == "\n"):
+    del list[0]
+    # print("remove_newline newsize = " + str(len(list)))
+  else:
+    if (len(list) != 0):
+      list[len(list)-1] = list[len(list)-1].rstrip("\n")
+  return list
+
+def list_str_to_int(list, divide_by = None):
+  # print("list_str_to_int len = " + str(len(list)) + " 1st value = "+ str(list[0]))
+  if len(list) == 0:
+    list.append(0)
+  else:
+    if divide_by == None:
+      list = [int(i) for i in list]
+    else:
+      list = [int(i)/divide_by for i in list]
+  return list
+
+
+def make_violin_plot_list(bench_list, keyword, compare_to_list = None):
+  l2_res = []
+
+  for header in bench_list:
+    l2_res.append(header[keyword].copy())
+  
+  if compare_to_list != None:
+    l2_compare = []
+
+    for header in compare_to_list:
+      l2_compare.append(header[keyword]) # <- ! not a copy !
+    
+    for il in range(0, len(l2_res)):
+      l1_res = l2_res[il]
+      l1_compare = l2_compare[il]
+      compare_value = stat.median(l1_compare)
+
+      for i in range(0, len(l1_res)):
+        old = l1_res[i]
+        l1_res[i] = 100 * l1_res[i] / compare_value # l1_compare[i]
+      l2_res[il] = l1_res
+
+  return l2_res
