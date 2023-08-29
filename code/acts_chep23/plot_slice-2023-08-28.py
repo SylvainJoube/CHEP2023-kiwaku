@@ -10,8 +10,13 @@ import statistics as stat
 import sys
 import math
 
+sys.path.append('../common/plot/')
+import plot_utils as pu
+
 
 VERSION_ATTENDUE = 1
+
+check_value_tolerance = 5
 
 # ============= Gestion de la taille
 my_dpi = 96
@@ -87,65 +92,6 @@ def load_file(path):
   return bench_list
 
 
-def make_1D_list(bench_list, field_name):
-  res = []
-  ind = 0
-  for i in bench_list:
-    res.append(i[field_name]) # field_name = "elapsed_time_us"
-    ind += 1
-  return res
-
-def make_1D_list_every(bench_list, field_name, take_every = 0):
-  res = []
-  ind = 0
-  for i in bench_list:
-    if (ind % take_every == 0):
-      res.append(int(i[field_name])) # field_name = "elapsed_time_us"
-    else:
-      res.append("")
-    ind += 1
-  return res
-
-def make_1D_list_every_auto(bench_list, field_name):
-  every = int(len(bench_list) / 6)
-  print("len(bench_list) = " + str(len(bench_list)))
-  print("every = " + str(every))
-  if (every < 1):
-    every = 1
-  return make_1D_list_every(bench_list, field_name, every)
-
-def make_diff_list(l1, l2):
-  res  = []
-  if (len(l1) != len(l2)):
-    sys.exit("ERROR @make_diff_list. Number of points not the same in both lists.")
-
-  for i in range(0, len(l1)):
-    v1 = l1[i]["elapsed_time_us"]
-    v2 = l2[i]["elapsed_time_us"]
-    diff = 100 * v2 / v1
-    # diff = (v2 - v1) / ((abs(v1) + abs(v2))/2) # Abs not necessary since v1 and v2 are positive time values 
-    res.append(diff) # Percentage
-  return res
-
-
-def check_same_results(l1, l2):
-  if (len(l1) != len(l2)):
-    sys.exit("ERROR @check_same_results. Number of points not the same in both lists.")
-
-  for i in range(0, len(l1)):
-    v1 = l1[i]["check_value"]
-    v2 = l2[i]["check_value"]
-    if (abs(v1 - v2) > 5):
-      sys.exit("ERROR @check_same_results. Value at position "
-      + str(i) + " differs: " + str(v1) + " != " +str(v2) + " (diff > 3)")
-  print("OK check_same_results, " + str(len(l1)) + " value(s) checked.")
-  return
-
-
-# TEMPORARILY DISABLE ERROR CHECKING
-
-
-
 # acts_kiwaku_inline_list   = load_file("data/slice_kiwaku_inline_blop-debian11_step100.000000.txt")
 # acts_kiwaku_noinline_list = load_file("data/slice_kiwaku_noinline_blop-debian11_step100.000000.txt")
 # acts_standalone_list      = load_file("data/slice_standalone_blop-debian11_step100.000000.txt")
@@ -155,13 +101,15 @@ acts_kiwaku_inline_list   = load_file("slice/plot/data3/slice_kiwaku_inline_blop
 acts_kiwaku_noinline_list = load_file("slice/plot/data3/slice_kiwaku_noinline_blop-debian11_step1000.txt")
 acts_standalone_list      = load_file("slice/plot/data3/slice_standalone_opti_blop-debian11_step1000.txt")
 
-check_same_results(acts_standalone_list, acts_standalone_list)
-check_same_results(acts_standalone_list, acts_kiwaku_inline_list)
-check_same_results(acts_standalone_list, acts_kiwaku_noinline_list)
 
-ldiff0 = make_diff_list(acts_standalone_list, acts_standalone_list)
-ldiff1 = make_diff_list(acts_standalone_list, acts_kiwaku_inline_list)
-ldiff2 = make_diff_list(acts_standalone_list, acts_kiwaku_noinline_list)
+# ERROR CHECKING (with tolerance)
+pu.check_same_results(acts_standalone_list, acts_standalone_list, "check_value", check_value_tolerance)
+pu.check_same_results(acts_standalone_list, acts_kiwaku_inline_list, "check_value", check_value_tolerance)
+pu.check_same_results(acts_standalone_list, acts_kiwaku_noinline_list, "check_value", check_value_tolerance)
+
+ldiff0 = pu.make_diff_list(acts_standalone_list, acts_standalone_list, "elapsed_time_us")
+ldiff1 = pu.make_diff_list(acts_standalone_list, acts_kiwaku_inline_list, "elapsed_time_us")
+ldiff2 = pu.make_diff_list(acts_standalone_list, acts_kiwaku_noinline_list, "elapsed_time_us")
 
 def make_1D_ticks(ticks_number):
   res = []
@@ -176,7 +124,7 @@ def make_1D_ticks(ticks_number):
   return res
 
 # ptotal_1D   = make_1D_ticks(len(acts_covfie_list))
-ptotal_1D   = make_1D_list_every_auto(acts_standalone_list, "z_value")
+ptotal_1D   = pu.make_1D_list_every_auto(acts_standalone_list, "z_value")
 
 # range(1, len(ldiff)+1) #make_1D_list_every(lorentz_covfie_list, "ptotal", 3)
 
