@@ -14,6 +14,7 @@
 namespace lorentz
 {
 
+// >>> Moved to program_args.hpp >>>
 // std::vector<std::vector<std::uint64_t>> get_parameter_ranges()
 // {
 //   // Reduced set of parameters
@@ -52,7 +53,7 @@ void bench_with_field(std::string arch_name, std::string field_name, void(*bench
 {
   auto params = program_args::lorentz::get_parameter_ranges();
 
-  std::string params_str = program_args::lorentz::pretty_print_ranges();
+  // std::string params_str = program_args::lorentz::pretty_print_ranges();
   // std::string params_str = "";
   // for (std::size_t i = 0; i < params.size(); ++i) {
   //   const std::vector<std::uint64_t>& param = params[i];
@@ -63,43 +64,46 @@ void bench_with_field(std::string arch_name, std::string field_name, void(*bench
   //   }
   // }
 
-  std::string prefix;
+  // std::string prefix;
 
   
 
-  #if SMEM_ENABLE_LOG
-    prefix = "with_mtest_lorentz";
-  #else
-    prefix = "lorentz";
-  #endif
+  // #if SMEM_ENABLE_LOG
+  //   prefix = "with_mtest_lorentz";
+  // #else
+  //   prefix = "lorentz";
+  // #endif
 
-  #if USE_OPTIMIZED_MATRIX
-    prefix = prefix + "_opti";
-  #else
-    prefix = prefix + "";
-  #endif
+  // #if USE_OPTIMIZED_MATRIX
+  //   prefix = prefix + "_opti";
+  // #else
+  //   prefix = prefix + "";
+  // #endif
 
-  #if USE_NANOBENCH
-    prefix = prefix + "_nanob";
-  #endif
+  // #if USE_NANOBENCH
+  //   prefix = prefix + "_nanob";
+  // #endif
   
-  #if USE_SYSCLOCK
-    prefix = prefix + "_sclock";
-  #endif
+  // #if USE_SYSCLOCK
+  //   prefix = prefix + "_sclock";
+  // #endif
 
-  prefix += "_it" +std::to_string(lorentz_iteration_result_t::iteration_base);
+  // prefix += "_it" +std::to_string(lorentz_iteration_result_t::iteration_base);
 
-  std::string output_fname = prefix + "_" + arch_name + "_" + get_computer_name() + params_str + "_" + field_name + ".txt";
+  // std::string output_fname = prefix + "_" + arch_name + "_" + get_computer_name() + params_str + "_" + field_name + ".txt";
+
+  std::string output_fname = program_args::lorentz::make_output_fname(arch_name, field_name);
 
   print::line("Will output to file:  " + output_fname);
-  print::line("In directory:         " + std::filesystem::current_path().string());
+  print::line("In directory:         " + std::filesystem::current_path().string() + "/bench_output");
   print::line("");
   lorentz_iteration_result_t::print_header();
 
-  write_f.open(output_fname);
+  write_f.open("bench_output/" + output_fname);
   write_f << std::to_string(lorentz_iteration_result_t::version) << "\n"; // file version
 
   #if SMEM_ENABLE_LOG
+    std::string params_str = program_args::lorentz::pretty_print_ranges();
     std::string mem_test_fname = "MEM_TEST_lorentz_" + arch_name + "_" + get_computer_name() + params_str + "_" + field_name + ".txt";
     mem_test_write_f.open(mem_test_fname);
   #endif

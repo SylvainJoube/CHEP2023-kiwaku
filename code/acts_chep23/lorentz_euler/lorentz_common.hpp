@@ -18,10 +18,12 @@
 #include "../acts_field/data_structures_common.hpp"
 #include "lorentz_bench_common.hpp"
 
-#if USE_NANOBENCH
-  #define ANKERL_NANOBENCH_IMPLEMENT
-  #include "../../common/nanobench.h"
-#endif
+#include "../../common/program_args.hpp"
+
+// #if USE_NANOBENCH
+#define ANKERL_NANOBENCH_IMPLEMENT
+#include "../../common/nanobench.h"
+// #endif
 
 
 
@@ -261,7 +263,9 @@ struct Lorentz
 
     particle_vector objs = particles_creation(particles, imom);
 
-    #if USE_NANOBENCH
+   
+    if (program_args::use_nanobench) // #if USE_NANOBENCH
+    {
       ankerl::nanobench::Bench bench;
       std::size_t run_count = 0;
       bench = ankerl::nanobench::Bench().epochs(1).run("Lorentz iteration",
@@ -288,13 +292,16 @@ struct Lorentz
       // std::cout << print::pad_right(cyc_op_err , 14);
       itres.cycles = cyc_op_mean;
       // std::cout << "cyc_op_mean = " << cyc_op_mean << "  run_count = " << run_count << std::endl;
-    #endif
+      
+    } // #endif
+    
     // Uses the same objs, I do not think that is an issue.
-    #if USE_SYSCLOCK
+    if (program_args::use_system_clock) // #if USE_SYSCLOCK
+    {
       chrono.Init();
       particles_steps_computation(objs, particles, steps, table_);
       itres.elapsed_time_s = chrono.ElapsedTime();
-    #endif
+    } // #endif
 
     itres.chk_str = particles_result_checking(objs);
     return itres;
@@ -329,13 +336,15 @@ struct lorentz_bench_t
 
     lorentz_iteration_result_t res_total;
 
-    #if USE_NANOBENCH
+    if (program_args::use_nanobench) // #if USE_NANOBENCH
+    {
       res_total.cycles.resize(iterations);
-    #endif
+    } // #endif
 
-    #if USE_SYSCLOCK
+    if (program_args::use_system_clock) // #if USE_SYSCLOCK
+    {
       res_total.times_s.resize(iterations);
-    #endif
+    } // #endif
 
     for (uint i = 0; i < iterations; ++i)
     {
@@ -351,13 +360,16 @@ struct lorentz_bench_t
       }
       res_total.chk_str = res.chk_str;
 
-      #if USE_NANOBENCH
-        res_total.cycles[i] = res.cycles;
-      #endif
 
-      #if USE_SYSCLOCK
+      if (program_args::use_nanobench) //#if USE_NANOBENCH
+      {
+        res_total.cycles[i] = res.cycles;
+      } // #endif
+
+      if (program_args::use_system_clock) // #if USE_SYSCLOCK
+      {
         res_total.times_s[i] = res.elapsed_time_s;
-      #endif
+      } // #endif
 
       // res_total.elapsed_time_s += r.elapsed_time_s;
     }

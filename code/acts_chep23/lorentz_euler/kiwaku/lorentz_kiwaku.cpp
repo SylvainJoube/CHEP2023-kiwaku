@@ -2,6 +2,7 @@
 #include <filesystem>
 #include "../../../common/utils/utils.hpp"
 #include "../../../common/lorentz-euler/lorentz-euler_utlils.hpp"
+#include "../../../common/program_args.hpp"
 #include "../lorentz_bench_common.hpp"
 #include "../lorentz_common.hpp"
 
@@ -37,7 +38,9 @@ export CXX=clang++-15 \
 
 
 Thinkpad sans cmake car à La Pierre :
-export COVFIE_BENCHMARK_FIELD="/home/data_sync/academique/These/covfie_sylvain/atlas.cvf"
+  export COVFIE_BENCHMARK_FIELD="/home/data_sync/academique/These/covfie_sylvain/atlas.cvf"
+ou  
+  export COVFIE_BENCHMARK_FIELD="/home/data_sync/academique/These/chep23-pap/data/atlas.cvf"
 cd /home/data_sync/academique/These/chep23-pap/code/acts_chep23/lorentz_euler/kiwaku
 dpcpp lorentz_kiwaku.cpp ../../acts_field/kiwaku/acts_struct_kiwaku.cpp -o e.exe -O3 -std=c++20 -I/home/data_sync/academique/These/kiwaku_2023/kiwaku/include/ && ./e.exe
 
@@ -106,8 +109,17 @@ int main([[maybe_unused]] int argc, [[maybe_unused]] char ** argv)
   print::line("");
   print::head("KIWAKU Lorentz-Euler KIWAKU");
 
-  lorentz::bench_with_field<os_acts_field>("kiwaku", "acts-field", lorentz_bench_t::execute_custom<os_acts_field, 4>); // , &acts_field
-  lorentz::bench_with_field<os_constant_field>("kiwaku", "constant-field", lorentz_bench_t::execute_custom<os_constant_field, 20>); // , &constant_field
+  program_args::parse(argc, argv, true);
+
+  if (program_args::bench_field_acts) 
+  {
+    lorentz::bench_with_field<os_acts_field>("kiwaku", "acts-field", lorentz_bench_t::execute_custom<os_acts_field, 4>); // , &acts_field
+  }
+
+  if (program_args::bench_field_constant) 
+  {
+    lorentz::bench_with_field<os_constant_field>("kiwaku", "constant-field", lorentz_bench_t::execute_custom<os_constant_field, 20>); // , &constant_field
+  }
 
   return 0;
 }

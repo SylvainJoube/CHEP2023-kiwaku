@@ -33,34 +33,60 @@ If you are using vscode, you can add this to your `.vscode/c_cpp_properties.json
 }
 ```
 
-## Compiling and running the benchmarks
+## Compiling the benchmarks
 
 ```bash
 cd code/acts_chep23/
 
 export CPP_COMPILER="clang++-12"
+export KIWAKU_INCLUDE_DIR="/home/data_sync/academique/These/kiwaku_2023/kiwaku/include/"
 
 # Compiling the Lorentz-Euler standalone code
 $CPP_COMPILER lorentz_euler/standalone/lorentz_standalone.cpp -o lorentz-euler_standalone.exe -O3 -std=c++20
 
 # Compiling the Lorentz-Euler Kiwaku code
-$CPP_COMPILER lorentz_euler/kiwaku/lorentz_kiwaku.cpp acts_field/kiwaku/acts_struct_kiwaku.cpp -o lorentz-euler_kiwaku.exe -O3 -std=c++20 -I/home/data_sync/academique/These/kiwaku_2023/kiwaku/include/
+$CPP_COMPILER lorentz_euler/kiwaku/lorentz_kiwaku.cpp acts_field/kiwaku/acts_struct_kiwaku.cpp -o lorentz-euler_kiwaku.exe -O3 -std=c++20 -I$KIWAKU_INCLUDE_DIR
 
 # Compiling the ACTS magnetic-field slicing standalone code
 $CPP_COMPILER slice/standalone/acts_slice_standalone.cpp -o acts_slice_standalone.exe -O3 -std=c++20
 
 # Compiling the ACTS magnetic-field slicing Kiwaku code
-$CPP_COMPILER slice/kiwaku/acts_slice_kiwaku.cpp acts_field/kiwaku/acts_struct_kiwaku.cpp -o acts_slice_kiwaku.exe -O3 -std=c++20 -I/home/data_sync/academique/These/kiwaku_2023/kiwaku/include/
+$CPP_COMPILER slice/kiwaku/acts_slice_kiwaku.cpp acts_field/kiwaku/acts_struct_kiwaku.cpp -o acts_slice_kiwaku.exe -O3 -std=c++20 -I$KIWAKU_INCLUDE_DIR
 
+```
+
+## Running the benchmarks
+
+If not done yet, go to directory `code/acts_chep23/`.
+
+When ran without arguments, the default configuration is loaded. If you need to specify a custom configuration, here are the accepted command-line arguments:
+
+- `"-field"` or `"-F"` allows you to choose the field type you want for your benchmarks. By default both `"acts-field"` and `"constant-field"` will be used (input `"all"`), each one with its own output file `.bench.txt`. Allowed inputs: `"all"`, `"acts"`, `"constant"`.
+
+- `"-computer"` or `"-C"` allows you to choose the computer name given to the output benchmark file. By default, the name `"generic"` will be used. Using the input `"real"` or `"real_name"` will change the name into the real system name of the computer, as returned by the linux command `"hostname"`.
+
+- `"-timer"` or `"-T"` allows you to choose the timing method. By default, the `std::chrono::system_clock` will be used (input `"sclock"`), but you can use `nanobench` to get cpu cycles instead (input `"nanobench"`). If so, you will need to run the benchmark as admin, and keep the global variable `"COVFIE_BENCHMARK_FIELD"` by running the benchmark as follows: `"sudo --preserve-env ./lorentz-euler_kiwaku.exe -timer nanobench"`. ou don't need admin rights to use the `system_clock`: `"./lorentz-euler_kiwaku.exe -timer sclock"`. Allowed inputs: `"sclock"`, `"nanobench"`.
+
+Should you want to change the `steps`, `particles` and `imom` bench values, please directly change the code written on file `code/acts_chep23/lorentz_euler/lorentz_bench_common.hpp`, function `std::vector<std::vector<std::uint64_t>> get_parameter_ranges()` from namespace `lorentz`.
+
+- TODO: `"-iteration_count"` per configuration (default = 10)
+
+```bash
 
 # The ACTS field location is necessary to run the ACTS-related benchmarks
 export COVFIE_BENCHMARK_FIELD="/home/data_sync/academique/These/covfie_sylvain/atlas.cvf"
 
+# Running the Lorentz-Euler standalone benchmark with default parameters
+./lorentz-euler_standalone.exe
+
+# Running the Lorentz-Euler standalone benchmark with custom parameters
+./lorentz-euler_standalone.exe -field all -computer real -timer sclock
+
+# Running with nanobench (cpu cycles instead of time)
+sudo -E ./lorentz-euler_standalone.exe -field acts -timer nanobench
+
 # Running the Lorentz-Euler Kiwaku benchmark
 ./lorentz-euler_kiwaku.exe
-
-# Running the Lorentz-Euler standalone benchmark
-./lorentz-euler_standalone.exe
 
 # Running the ACTS magnetic-field slicing Kiwaku benchmark
 ./acts_slice_kiwaku.exe
@@ -72,18 +98,11 @@ export COVFIE_BENCHMARK_FIELD="/home/data_sync/academique/These/covfie_sylvain/a
 ./lorentz-euler_kiwaku.exe && ./lorentz-euler_standalone.exe && ./acts_slice_kiwaku.exe && ./acts_slice_standalone.exe
 ```
 
-When called without parameters, the default configuration is loaded. If you need to specify a custom configuration, here are the accepted parameters:
-(TODO)
-- For Lorentz-Euler:
-  - `clock_config` (system clock or nanobench)
-  - always use optimized matrix
-  - `iteration_count` per configuration (default = 10)
-  - `computer_name_set` sets the output file computer_name to the specified value
-  - `computer_name_get` sets the output file computer_name to the system name
-  - `field_name` "all" or "acts" or "constant"
 
 
 ## Plot the benchmark results
+
+Benchmark output files must be placed in the `bench_output` directory for the `plot.py` python script to access them.
 
 ```bash
 

@@ -44,13 +44,11 @@ use_acts_field = True
 
 plot_diff = True # Plot values relative to standalone, or plot absolute values
 
-plot_cycles_instead_of_time = False 
-
 per_particle_values = True # Divide the values by the number of particles and steps 
 
-input_path = "bench_output/"
+input_directory = "bench_output/"
 
-const_algo_name_lorentz = "lorentz_opti"
+const_algo_name_lorentz = "lorentz"
 const_algo_name_slice   = "slice"
 
 # cn = const name
@@ -61,9 +59,9 @@ cn_field_constant = "constant"
 file_standalone = ""
 file_kiwaku     = ""
 timer_config    = "sclock" # system clock
-algorithm_name  = "lorentz_opti"
+algorithm_name  = "lorentz"
 iteration_count = "it10"
-computer_name   = "noobuntublue" # generic # aussi utilisé pour le nom du fichier d'entrée 
+computer_name   = "generic" # generic # aussi utilisé pour le nom du fichier d'entrée 
 field_name      = "acts-field" # constant-field
 
 if args.computer != None:
@@ -80,13 +78,13 @@ def check_parameter_validity(param, accepted_params):
 
 # if args.mode != None:
 
-if args.algorithm not in [const_algo_name_lorentz, const_algo_name_slice, "lorentz"]:
+if args.algorithm not in [const_algo_name_lorentz, const_algo_name_slice]:
   print("ERROR: please provide a valid algorithm name with \"-algorithm lorentz_opti\" or \"-algorithm slice\"")
   exit()
-if args.algorithm == "lorentz":
-  algorithm_name = "lorentz_opti"
-else:
-  algorithm_name = args.algorithm
+# if args.algorithm == "lorentz":
+#   algorithm_name = "lorentz_opti"
+# else:
+algorithm_name = args.algorithm
 
 
 if (args.field != None):
@@ -171,10 +169,11 @@ if is_lorentz_euler_algorithm():
     print("Lorentz-Euler: imom range set to \"" + imom_n + "\"")
 
   file_prefix     = algorithm_name + "_" + timer_config + "_" + iteration_count
-  file_suffix     = computer_name + "_" + particles_n + "_" + steps_n + "_" + imom_n + "_" + field_name + ".txt"
+  file_prefix    += "_" + particles_n + "_" + steps_n + "_" + imom_n + "_" + field_name
+  file_suffix     = computer_name + ".bench.txt"
 
-  file_standalone = file_prefix + "_standalone_" + file_suffix
-  file_kiwaku     = file_prefix + "_kiwaku_" + file_suffix
+  file_standalone = input_directory + file_prefix + "_standalone_" + file_suffix
+  file_kiwaku     = input_directory + file_prefix + "_kiwaku_" + file_suffix
 
   # def print_parameters():
   print("\nLorentz-Euler: current paramaters:")
@@ -190,6 +189,8 @@ if is_lorentz_euler_algorithm():
   print("          Kiwaku: " + file_kiwaku)
   print("      Standalone: " + file_standalone)
   print()
+
+  plot_cycles_instead_of_time = (timer_config == "nanobench")
 
 
     # parser.add_argument("-algorithm", "-A", help="Chooses which algorithm to plot: \"lorentz_opti\" or \"slice\"")
@@ -264,6 +265,17 @@ if is_lorentz_euler_algorithm():
 
         header["elapsed_time"]  = stat.median(times_int)
         header["cycle"]         = stat.median(cycles_int)
+
+        if timer_config == "nanobench":
+          zeroes_everywhere = True
+          for e in cycles_int:
+            if e != 0:
+              zeroes_everywhere = False
+              break
+          if zeroes_everywhere:
+            print("INPUT ERROR: (every cpu_cycle) == 0, when using Nanobench, you need to run the benchmark with admin rights: sudo -E ./lorentz-euler_....exe")
+            print("             for file: " + path)
+            exit(-1)
         
 
         # print(header["times_l"])
@@ -353,7 +365,7 @@ if is_lorentz_euler_algorithm():
     if per_particle_values:
       unit_name_file += "_per-particle"
     
-    out_fname = "2023-05-01_" + computer_name + "_" + field_name + "_" + unit_name_file + "_" + pdiff_str + ".png"
+    out_fname = "2023-05-01_" + computer_name + "_" + field_name + "_" + unit_name_file + "_" + pdiff_str + ".bench.png"
 
     # plt.ylabel('Elapsed time (µs)')
     if plot_diff:
@@ -488,7 +500,7 @@ if is_slice_algorithm():
 
   plt.ylim([0, 110]) # TODO: check max value in each curve and add 10
 
-  output_image_name = "slice_" + computer_name + "_" + "ACTS_magnetic_field" + ".png"
+  output_image_name = "slice_" + computer_name + "_" + "ACTS_magnetic_field" + ".bench.png"
 
   plt.savefig(output_image_name, format='png') #, dpi=my_dpi)
 
