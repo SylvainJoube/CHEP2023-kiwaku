@@ -99,7 +99,7 @@ void bench_with_field(std::string arch_name, std::string field_name, void(*bench
   print::line("");
   lorentz_iteration_result_t::print_header();
 
-  write_f.open("bench_output/" + output_fname);
+  write_f.open("output_bench/" + output_fname);
   write_f << std::to_string(lorentz_iteration_result_t::version) << "\n"; // file version
 
   #if SMEM_ENABLE_LOG

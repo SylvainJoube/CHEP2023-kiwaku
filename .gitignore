@@ -25,3 +25,9 @@ tuto_sycl_intel
 
 .ipynb_checkpoints
 __pycache__
+
+# Should be a .bench.txt for example, to avoid deleting .txt
+*.txt
+
+*.bench.png
+*.bench.txt

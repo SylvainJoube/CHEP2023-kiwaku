@@ -21,19 +21,18 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("-algorithm", "-A", help="Chooses which algorithm to plot: \"lorentz_opti\" or \"slice\"")
 parser.add_argument("-field", "-F", help="Chooses which field to plot: \"acts\" or \"constant\"")
-parser.add_argument("-computer", "-C", help="Sets the computer name used for the benchmark output file (default: \"generic\")")
+parser.add_argument("-computer", "-CPT", help="Sets the computer name used for the benchmark output file (default: \"generic\")")
 parser.add_argument("-timer", "-T", help="Sets the time measurment method used for the benchmark output file: \"sclock\" for system clock timer or \"nanobench\" for the nanobench measurments.")
-parser.add_argument("-mode", help="advanced or default mode")
+parser.add_argument("-compare", "-CMP", help="Plot strategy. \"relative\": plots by comparing the Kiwaku curve with the standalone. \"absolute\": plots absolute time/cycles values.")
 
 parser.add_argument("-particles", "-LP", help="For Lorentz-Euler algorithm only. Sets the range for particles, as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\"")
 parser.add_argument("-steps", "-LS", help="For Lorentz-Euler algorithm only. Sets the range for steps (number of move iterations for each particle), as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\"")
 parser.add_argument("-imom", "-LM", help="For Lorentz-Euler algorithm only. Sets the range for imom (initial cinetic momentum for each particle), as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\"")
 
-
 args = parser.parse_args()
 
 # print(f"Args: {args}\nCommand Line: {sys.argv}\nfoo: {args.foo}")
-print(f"Dict format: {vars(args)}")
+# print(f"Dict format: {vars(args)}")
 
 
 VERSION_ATTENDUE = 2
@@ -46,7 +45,8 @@ plot_diff = True # Plot values relative to standalone, or plot absolute values
 
 per_particle_values = True # Divide the values by the number of particles and steps 
 
-input_directory = "bench_output/"
+input_directory  = "output_bench/"
+output_directory = "output_plot/"
 
 const_algo_name_lorentz = "lorentz"
 const_algo_name_slice   = "slice"
@@ -100,6 +100,13 @@ if (args.timer != None):
     exit()
   timer_config = args.timer
   print("Benchmark timer set to: " + timer_config)
+
+if (args.compare != None):
+  if args.compare not in ["relative", "absolute"]:
+    print("ERROR: please provide a valid comparison method with \"-compare relative\" or \"-compare absolute\"")
+    exit()
+  plot_diff = (args.compare == "relative")
+  print("Benchmark comparison method set to: " + args.compare)
 
 
 def is_lorentz_euler_algorithm():
@@ -170,10 +177,18 @@ if is_lorentz_euler_algorithm():
 
   file_prefix     = algorithm_name + "_" + timer_config + "_" + iteration_count
   file_prefix    += "_" + particles_n + "_" + steps_n + "_" + imom_n + "_" + field_name
-  file_suffix     = computer_name + ".bench.txt"
+  file_suffix     = computer_name
 
-  file_standalone = input_directory + file_prefix + "_standalone_" + file_suffix
-  file_kiwaku     = input_directory + file_prefix + "_kiwaku_" + file_suffix
+  file_standalone = input_directory + file_prefix + "_standalone_" + file_suffix + ".bench.txt"
+  file_kiwaku     = input_directory + file_prefix + "_kiwaku_" + file_suffix + ".bench.txt"
+
+  file_out_png = output_directory + file_prefix + "_" + file_suffix
+  if plot_diff:
+    file_out_png += "_relative"
+  else:
+    file_out_png += "_absolute"
+  
+  file_out_png += ".bench.png" 
 
   # def print_parameters():
   print("\nLorentz-Euler: current paramaters:")
@@ -188,6 +203,7 @@ if is_lorentz_euler_algorithm():
   print("Associated file names:")
   print("          Kiwaku: " + file_kiwaku)
   print("      Standalone: " + file_standalone)
+  print("    Out plot img: " + file_out_png)
   print()
 
   plot_cycles_instead_of_time = (timer_config == "nanobench")
@@ -315,9 +331,9 @@ if is_lorentz_euler_algorithm():
     violin_keyword = "times_l"
     plot_keyword = "elapsed_time"
 
-  if plot_diff:
-    pu.draw_violin_plot("grey", pu.make_violin_plot_list(standalone_list, violin_keyword, compare_to_list))
-    pu.draw_violin_plot("blue", pu.make_violin_plot_list(kiwaku_list, violin_keyword, compare_to_list))
+  # if plot_diff:
+  pu.draw_violin_plot("grey", pu.make_violin_plot_list(standalone_list, violin_keyword, compare_to_list))
+  pu.draw_violin_plot("blue", pu.make_violin_plot_list(kiwaku_list, violin_keyword, compare_to_list))
 
 
   if plot_diff:
@@ -330,6 +346,8 @@ if is_lorentz_euler_algorithm():
   #  (opti matrix)
   plt.plot  (range(1, len(ldiff0)+1), ldiff0, color="grey", label="Standalone", linestyle="dashdot", linewidth=line_width)
   plt.plot  (range(1, len(ldiff2)+1), ldiff2, color="blue", label="Kiwaku", linestyle="solid", linewidth=line_width)
+
+  max_y_value = max([max(ldiff0), max(ldiff2)])
 
 
   plt.rcParams['grid.linestyle'] = "-"
@@ -365,7 +383,7 @@ if is_lorentz_euler_algorithm():
     if per_particle_values:
       unit_name_file += "_per-particle"
     
-    out_fname = "2023-05-01_" + computer_name + "_" + field_name + "_" + unit_name_file + "_" + pdiff_str + ".bench.png"
+    # out_fname = "2023-05-01_" + computer_name + "_" + field_name + "_" + unit_name_file + "_" + pdiff_str + ".bench.png"
 
     # plt.ylabel('Elapsed time (µs)')
     if plot_diff:
@@ -392,9 +410,11 @@ if is_lorentz_euler_algorithm():
   # global_drawn_x_variables_number+1
   # plt.xticks(range(1, 6), x_list_curve_drawn) # = x_list_shared et x_list_acc
 
-  plt.ylim([0, 113])
+  # TODO
+  plt.ylim([0, max_y_value * 1.15])
 
-  plt.savefig(out_fname, format='png') #, dpi=image_dpi)
+  print
+  plt.savefig(file_out_png, format='png') #, dpi=image_dpi)
 
   plt.show()
 
