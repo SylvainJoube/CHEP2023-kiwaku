@@ -21,6 +21,7 @@ namespace program_args
   bool use_nanobench          = false;
   // bool replace_computer_name  = true;
   std::string computer_name_str = "generic"; // will be replaced in parse(...), if necessary
+  std::size_t iteration_count = 10;
 
   namespace lorentz
   {

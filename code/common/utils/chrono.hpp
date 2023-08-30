@@ -71,4 +71,11 @@ namespace bench
     std::chrono::time_point<std::chrono::system_clock> last_point_;
     double elapsed_;
   };
+
+  // int median(std::vector<int> &v)
+  // {
+  //     size_t n = v.size() / 2;
+  //     std::nth_element(v.begin(), v.begin()+n, v.end());
+  //     return v[n];
+  // }
 }

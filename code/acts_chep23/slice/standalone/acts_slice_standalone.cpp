@@ -12,6 +12,7 @@
 // #include "../../acts_field/standalone/data_structures_standalone.hpp"
 
 #include "../../../common/utils/utils.hpp"
+#include "../../../common/program_args.hpp"
 
 // #include "../../../common/acts_slice/acts_slice_utils.hpp"
 #include "../acts_slice_utils.hpp"
@@ -57,12 +58,8 @@ $ clang++-15 acts_field_standalone.cpp bitmap.cpp -o exe -O3 -std=c++20 && ./exe
 
 
 
-
-void render_slice(float z_value)
+acts_slice::bench_result_single render_slice_iteration(float z_value, acts_data_t& a, bool save_image)
 {
-  acts_data_t a;
-  a.read_acts_file();
-
   std::size_t image_width  = 1024;
   std::size_t image_height = 1024;
 
@@ -74,13 +71,14 @@ void render_slice(float z_value)
   // std::unique_ptr<char[]> img =
   //   std::make_unique<char[]>(image_width * image_height);
 
-  for (uint x = 0; x < image_width; ++x) {
-    for (uint y = 0; y < image_height; ++y) {
+  for (uint x = 0; x < image_width; ++x)
+  {
+    for (uint y = 0; y < image_height; ++y) 
+    {
       float fx = x / static_cast<float>(image_width);
       float fy = y / static_cast<float>(image_height);
 
       // pt3D<float> asked{fx * 20000.f - 10000.f, fy * 20000.f - 10000.f, z_value};
-
       pt3D<float> p = a.at(fx * 20000.f - 10000.f, fy * 20000.f - 10000.f, z_value);
       // Do something with p
       img[image_height * x + y] =
@@ -108,77 +106,115 @@ void render_slice(float z_value)
   Autant de fois qu'il y a d'évènements (nouvelle ligne) :
     z_value | elapsed_time_us | check_string
   */
-  write_f
-  << z_value << " " 
-  << static_cast<uint64_t>(elapsed_time * 1000000) << " " // microseconds
-  << int_chk << "\n";
-
   // write_f
-  // << " " 
+  // << z_value << " " 
   // << static_cast<uint64_t>(elapsed_time * 1000000) << " " // microseconds
-  // << int_chk;
-  
+  // << int_chk << "\n";
+
+  acts_slice::bench_result_single res;
+  res.elapsed_us  = static_cast<uint64_t>(elapsed_time * 1000000); // microseconds
+  res.int_chk     = int_chk;
   
   // std::cout << " took " << static_cast<std::size_t>(elapsed_time*1000) << "ms\n";
 
-  #if USE_OPTIMIZED_MATRIX
-    std::string img_path = "../slice/standalone/img_out/standalone_affine2_" + std::to_string(static_cast<int>(z_value/100)) + ".bmp";
-  #else
-    std::string img_path = "../slice/standalone/img_out/standalone_" + std::to_string(static_cast<int>(z_value/100)) + ".bmp";
-  #endif
+  if (save_image)
+  {
+    std::string img_path = "output_image/slice_standalone_" + std::to_string(static_cast<int>(z_value/100)) + ".bmp";
 
-  // a.print_extremums();
-  render_bitmap(
-        img,//.get(),
-        image_width,
-        image_height,
-        img_path
-    );
-    
+    // a.print_extremums();
+    render_bitmap(
+          img,//.get(),
+          image_width,
+          image_height,
+          img_path
+      );
+
+  }
   delete[] img;
+
+  return res;
+
+
+}
+
+void render_slice(float z_value)
+{
+  acts_data_t a;
+  a.read_acts_file();
+
+  acts_slice::bench_result_single r;
+  std::uint64_t int_chk;
+  std::vector<std::size_t> times;
+  for (std::size_t i = 0; i < program_args::iteration_count; ++i)
+  {
+    r = render_slice_iteration(z_value, a, (i == 0));
+    if (i == 0)
+    {
+      int_chk = r.int_chk;
+    }
+    else
+    {
+      if (int_chk != r.int_chk)
+      {
+        printer_t::error
+        (
+          "int_chk differs for the same z_value, iteration("
+          + std::to_string(i) + ")."
+        );
+        std::terminate();
+      }
+    }
+    times.push_back(r.elapsed_us);
+  }
+
+
+  write_f
+  << z_value << " " 
+  << int_chk << "\n";
+  for (auto e : times.size())
+  {
+    write_f << e << 
+ 
+  }
+
+  double moy_elapsed_s = 0;
+  if (times_s.size() != 0){
+    for (std::size_t i = 0; i < times_s.size(); ++i) {
+      moy_elapsed_s += times_s[i];
+    }
+    moy_elapsed_s /= times_s.size();
+  }
 
   print::str(print::pad_right(z_value, 8));
   print::str(print::pad_right(static_cast<std::size_t>(elapsed_time * 1000), 10));
   print::line("");
+
 }
 
-// void render_slice(float z_value)
-// {
-//   // std::cout << "---> z_value(" << z_value << ")";
-
-//   double time[5];
-//   // Per line: z_value time_depth4 chk_depth4 ... time_depth0 chk_depth0\n 
-//   write_f << z_value;
-//   time[4] = render_slice_depth<4>(z_value, true);
-//   time[3] = render_slice_depth<3>(z_value, false);
-//   time[2] = render_slice_depth<2>(z_value, false);
-//   time[1] = render_slice_depth<1>(z_value, false);
-//   time[0] = render_slice_depth<0>(z_value, false);
-//   write_f << "\n";
-
-//   print::str(print::pad_right(z_value, 10));
-
-//   for (int i = 0; i < 5; ++i) {
-//     print::str(print::pad_right(static_cast<std::size_t>(time[i] * 1000), 10));
-//   }
-//   print::line("");
-// }
-
-
-int main()
+int main(int argc, char** argv)
 {
   printer_t::line("\n");
   printer_t::head("HANDMADE STANDALONE (inline)");
+
+  program_args::parse(argc, argv, true);
+  
+
   printer_t::line("Elapsed time, milliseconds:");
   print::str(print::pad_right("z_value", 8));
   print::str(print::pad_right("time", 10));
   print::line("");
 
-  #if USE_OPTIMIZED_MATRIX
-    acts_slice_benchmark_t::run_benchmark("slice_standalone_opti", render_slice);
-  #else
-    acts_slice_benchmark_t::run_benchmark("slice_standalone", render_slice);
-  #endif
+  // if (program_args::bench_field_acts) 
+  // {
+  //   lorentz::bench_with_field<os_acts_field>("kiwaku", "acts-field", lorentz_bench_t::execute_custom<os_acts_field, 4>); // , &acts_field
+  // }
+
+  // if (program_args::bench_field_constant) 
+  // {
+  //   lorentz::bench_with_field<os_constant_field>("kiwaku", "constant-field", lorentz_bench_t::execute_custom<os_constant_field, 20>); // , &constant_field
+  // }
+
+  acts_slice::benchmark_t::run_benchmark("slice_standalone", render_slice);
   
   printer_t::line("\n");
 
