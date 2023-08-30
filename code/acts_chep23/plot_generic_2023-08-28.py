@@ -19,30 +19,31 @@ import plot_utils as pu
 
 parser = argparse.ArgumentParser()
 
-parser.add_argument("-algorithm", "-A", help="Chooses which algorithm to plot: \"lorentz_opti\" or \"slice\"")
-parser.add_argument("-field", "-F", help="Chooses which field to plot: \"acts\" or \"constant\"")
+parser.add_argument("-algorithm", "-A", help="Chooses which algorithm to plot: \"lorentz\" or \"slice\"")
+parser.add_argument("-field", "-F", help="Chooses which field to plot: \"acts\" or \"constant\" (default: \"acts\")")
 parser.add_argument("-computer", "-CPT", help="Sets the computer name used for the benchmark output file (default: \"generic\")")
-parser.add_argument("-timer", "-T", help="Sets the time measurment method used for the benchmark output file: \"sclock\" for system clock timer or \"nanobench\" for the nanobench measurments.")
-parser.add_argument("-compare", "-CMP", help="Plot strategy. \"relative\": plots by comparing the Kiwaku curve with the standalone. \"absolute\": plots absolute time/cycles values.")
+parser.add_argument("-timer", "-T", help="Sets the time measurement method used for the benchmark output file: \"sclock\" for system clock timer or \"nanobench\" for the nanobench measurements. (default: \"sclock\")")
+parser.add_argument("-compare", "-CMP", help="Plot strategy. \"relative\": plots by comparing the Kiwaku curve with the standalone. \"absolute\": plots absolute time/cycles values. (default: \"relative\")")
 
-parser.add_argument("-particles", "-LP", help="For Lorentz-Euler algorithm only. Sets the range for particles, as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\"")
-parser.add_argument("-steps", "-LS", help="For Lorentz-Euler algorithm only. Sets the range for steps (number of move iterations for each particle), as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\"")
-parser.add_argument("-imom", "-LM", help="For Lorentz-Euler algorithm only. Sets the range for imom (initial cinetic momentum for each particle), as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\"")
+parser.add_argument("-particles", "-LP", help="For Lorentz-Euler algorithm only. Sets the range for particles, as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\". (default: \"512-8192\")")
+parser.add_argument("-steps", "-LS", help="For Lorentz-Euler algorithm only. Sets the range for steps (number of move iterations for each particle), as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\". (default: \"1024\")")
+parser.add_argument("-imom", "-LM", help="For Lorentz-Euler algorithm only. Sets the range for imom (initial kinetic momentum for each particle), as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\". (default: \"128\")")
 
 args = parser.parse_args()
 
 # print(f"Args: {args}\nCommand Line: {sys.argv}\nfoo: {args.foo}")
 # print(f"Dict format: {vars(args)}")
 
-
-VERSION_ATTENDUE = 2
-
+# No associated argument
 check_value_tolerance = 5
 
+# -field argument
 use_acts_field = True
 
+# -compare argument
 plot_diff = True # Plot values relative to standalone, or plot absolute values
 
+# no associated argument
 per_particle_values = True # Divide the values by the number of particles and steps 
 
 input_directory  = "output_bench/"
@@ -55,13 +56,23 @@ const_algo_name_slice   = "slice"
 cn_field_acts     = "acts"
 cn_field_constant = "constant"
 
-
 file_standalone = ""
 file_kiwaku     = ""
+
+# -timer argument
 timer_config    = "sclock" # system clock
+
+# -algorithm argument
 algorithm_name  = "lorentz"
+
+# No associated argument TODO
 iteration_count = "it10"
+str_min_iteration_count = "10" # added to plot title only
+
+# -computer argument
 computer_name   = "generic" # generic # aussi utilisé pour le nom du fichier d'entrée 
+
+# -field argument
 field_name      = "acts-field" # constant-field
 
 if args.computer != None:
@@ -117,15 +128,8 @@ def is_slice_algorithm():
   global algorithm_name, const_algo_name_slice
   return algorithm_name == const_algo_name_slice
 
-# if args.mode == "default":
-#   print("--- mode = default, will set all parameters to their default values.")
-# else:
-#   print("--- mode = custom, please set all the required parameters.")
-#   # TODO
 
 
-
-str_min_iteration_count = "10" # added to plot title only
 
 
 
@@ -410,7 +414,6 @@ if is_lorentz_euler_algorithm():
   # global_drawn_x_variables_number+1
   # plt.xticks(range(1, 6), x_list_curve_drawn) # = x_list_shared et x_list_acc
 
-  # TODO
   plt.ylim([0, max_y_value * 1.15])
 
   print
@@ -518,7 +521,7 @@ if is_slice_algorithm():
   plt.xlabel('Z-value')
   plt.legend()
 
-  plt.ylim([0, 110]) # TODO: check max value in each curve and add 10
+  plt.ylim([0, 110]) # TODO: check max value in each curve and add 15%
 
   output_image_name = "slice_" + computer_name + "_" + "ACTS_magnetic_field" + ".bench.png"
 

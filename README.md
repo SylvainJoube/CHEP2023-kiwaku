@@ -2,6 +2,10 @@
 
 This repository contains the necessary code for testing the Kiwaku benchmark code described in the paper called `Kiwaku, a C++20 library for multidimensional arrays: Application to ACTS tracking`.
 
+## Credits
+
+TODO Thanks Covfie + links
+
 ## Prerequisites
 
 You will need a C++20 compatible compiler such as `clang++-12` and `git`.
@@ -100,15 +104,51 @@ sudo -E ./lorentz-euler_standalone.exe -field acts -timer nanobench
 
 
 
-## Plot the benchmark results
+## Plot the benchmark results for the Lorentz-Euler algorithm
 
-Benchmark output files must be placed in the `bench_output` directory for the `plot.py` python script to access them.
+Benchmark output files must be placed in the `output_bench` directory for the `plot.py` python script to access them. Command line arguments can be provided to the plot script. The input file names needed by the script varies depending on its command line arguments.
 
-```bash
-
-
-
+By default the Lorentz-Euler algorithm ran by the command `python3 plot.py -algorithm lorentz` will ask for the following file names: 
 ```
+Associated file names:
+          Kiwaku: output_bench/lorentz_sclock_it10_512-8192_1024_128_acts-field_kiwaku_generic.bench.txt
+      Standalone: output_bench/lorentz_sclock_it10_512-8192_1024_128_acts-field_standalone_generic.bench.txt
+    Out plot img: output_plot/lorentz_sclock_it10_512-8192_1024_128_acts-field_generic_relative.bench.png
+```
+
+- `"lorentz"` means we want the output file corresponding to the Lorentz-Euler benchmark.
+- `"sclock"` means we want the benchmark using `std::chrono::system_clock` as opposed to `nanobench` cpu cycles. 
+- `"it10"` means each test is repeated 10 times, for consistency. The mean will be taken by the plot, and violin plots will be drawn for each particle count value. **TODO You can change this setting TODO**. 
+- The three following values can be changed by editing the benchmark C++ code. Keep in mind you will also need to change them in the `plot.py` script.
+  - `"512-8192"` is the particle number range for the benchmark. 
+  - `"1024"` is the "steps" parameter, meaning the number of times each particle will be moved in the magnetic field. 
+  - `"128"` is the "imom" value, the initial kinetic moment for each particle. 
+- `"acts-field"` refers to the magnetic field used. 
+- `"generic"` indicates the computer name used for the benchmark.
+
+A full explanation for the input command line arguments for the plot code can be displayed by calling `python3 plot.py --help`. Ift is reproduced as follows.
+
+* `"-algorithm"` or `"-A"` chooses which algorithm to plot: `"lorentz"` or `"slice"`
+* `"-field"` or `"-F"` chooses which field to plot: `"acts"` or `"constant"` (default: `"acts"`)
+* `"-computer"` or `"-CPT"` sets the computer name used for the benchmark output file (default: `"generic"`)
+* `"-timer"` or `"-T"` tets the time measurement method used for the benchmark output file: `"sclock"` for system clock timer or `"nanobench"` for the nanobench measurements. (default: `"sclock"`)
+* `"-compare"` or `"-CMP"` Plot strategy. `"relative"`: plots by comparing the Kiwaku curve with the standalone. `"absolute"`: plots absolute time/cycles values. (default: `"relative"`)
+* For the C++ benchmark code, the following three arguments can only be changed by editing the C++ files (please see the `Running the benchmarks` section for more info).
+  * `"-particles"` or `"-LP"` For Lorentz-Euler algorithm only. Sets the range for particles, as written on the output benchmark file. Format: `"min-max"` or `"value"` in case `(min==max)`. Example: `"512-8192"` or `"512`". (default: `"512-8192"`)
+  * `"-steps"` or `"-LS"` For Lorentz-Euler algorithm only. Sets the range for steps (number of move iterations for each particle), as written on the output benchmark file. Format: `"min-max"` or `"value"` in case `(min==max)`. Example: `"512-8192"` or `"512"`. (default: `"1024"`)
+  * `"-imom"` or `"-LM"` For Lorentz-Euler algorithm only. Sets the range for imom (initial kinetic momentum for each particle), as written on the output benchmark file. Format: `"min-max"` or `"value"` in case `(min==max)`. Example: `"512-8192"` or `"512"`. (default: `"128"`)
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
