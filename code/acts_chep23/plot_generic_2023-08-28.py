@@ -573,7 +573,7 @@ if is_slice_algorithm():
   plt.xticks(range(1, len(ldiff1)+1), ptotal_1D)
 
 
-  plt.title(computer_name + " - ACTS slicing - Relative performance (%) between Kiwaku (inline) and:")
+  plt.title(computer_name + " - ACTS slicing")
 
 
   # plt.ylabel('Elapsed time (µs)')
@@ -597,5 +597,3 @@ if is_slice_algorithm():
 
   plt.show()
 
-
-print ("Hello World!")
