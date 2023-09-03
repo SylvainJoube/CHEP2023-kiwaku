@@ -173,6 +173,14 @@ def remove_newline(list):
       list[len(list)-1] = list[len(list)-1].rstrip("\n")
   return list
 
+def remove_empty_elements(list):
+  for i in range(len(list)):
+    if list[i] == '':
+      del list[i]
+    else:
+      i += 1
+  return list
+
 def list_str_to_int(list, divide_by = None):
   # print("list_str_to_int len = " + str(len(list)) + " 1st value = "+ str(list[0]))
   if len(list) == 0:

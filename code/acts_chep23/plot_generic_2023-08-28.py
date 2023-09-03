@@ -112,6 +112,8 @@ if (args.timer != None):
   timer_config = args.timer
   print("Benchmark timer set to: " + timer_config)
 
+plot_cycles_instead_of_time = (timer_config == "nanobench")
+
 if (args.compare != None):
   if args.compare not in ["relative", "absolute"]:
     print("ERROR: please provide a valid comparison method with \"-compare relative\" or \"-compare absolute\"")
@@ -210,17 +212,14 @@ if is_lorentz_euler_algorithm():
   print("    Out plot img: " + file_out_png)
   print()
 
-  plot_cycles_instead_of_time = (timer_config == "nanobench")
+  # parser.add_argument("-algorithm", "-A", help="Chooses which algorithm to plot: \"lorentz_opti\" or \"slice\"")
+  # parser.add_argument("-field", "-F", help="Chooses which field to plot: \"acts\" or \"constant\"")
+  # parser.add_argument("-computer", "-C", help="Sets the computer name used for the benchmark outpit file (default: \"generic\")")
+  # parser.add_argument("-mode", help="advanced or default mode")
 
-
-    # parser.add_argument("-algorithm", "-A", help="Chooses which algorithm to plot: \"lorentz_opti\" or \"slice\"")
-    # parser.add_argument("-field", "-F", help="Chooses which field to plot: \"acts\" or \"constant\"")
-    # parser.add_argument("-computer", "-C", help="Sets the computer name used for the benchmark outpit file (default: \"generic\")")
-    # parser.add_argument("-mode", help="advanced or default mode")
-
-    # parser.add_argument("-particles", "-LP", help="For Lorentz-Euler algorithm only. Sets the range for particles, as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\"")
-    # parser.add_argument("-steps", "-LS", help="For Lorentz-Euler algorithm only. Sets the range for steps (number of move iterations for each particle), as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\"")
-    # parser.add_argument("-imom", "-LM", help="For Lorentz-Euler algorithm only. Sets the range for imom (initial cinetic momentum for each particle), as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\"")
+  # parser.add_argument("-particles", "-LP", help="For Lorentz-Euler algorithm only. Sets the range for particles, as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\"")
+  # parser.add_argument("-steps", "-LS", help="For Lorentz-Euler algorithm only. Sets the range for steps (number of move iterations for each particle), as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\"")
+  # parser.add_argument("-imom", "-LM", help="For Lorentz-Euler algorithm only. Sets the range for imom (initial cinetic momentum for each particle), as written on the output benchmark file. Format: \"min-max\" or \"value\" if (min==max). Example: \"512-8192\" or \"512\"")
 
 
 
@@ -391,7 +390,7 @@ if is_lorentz_euler_algorithm():
 
     # plt.ylabel('Elapsed time (µs)')
     if plot_diff:
-      plt.ylabel('Relative performance (%), lower is better')
+      plt.ylabel('Relative duration (%), lower is better')
     else:
       if per_particle_values:
         if plot_cycles_instead_of_time:
@@ -425,7 +424,7 @@ if is_lorentz_euler_algorithm():
 
 
 if is_slice_algorithm():
-  VERSION_ATTENDUE = 1
+  VERSION_ATTENDUE = 2
 
   def slice_load_file(path):
     global VERSION_ATTENDUE
@@ -450,8 +449,34 @@ if is_slice_algorithm():
         # z_value | elapsed_time_us | check_value
         header = {} # dictionnaire vide
         header["z_value"]         = int   (words[0])
-        header["elapsed_time_us"] = float (words[1]) # math.log
-        header["check_value"]     = int   (words[2])
+        # header["elapsed_time_us"] = float (words[1]) # math.log
+        header["check_value"]     = int   (words[1])
+
+        divide_factor = 1
+        if timer_config == "nanobench": # ie use_nanobench
+          divide_factor = 1e9
+        else:
+          divide_factor = 1e6
+
+        times_int   = pu.filter_outliers(pu.list_str_to_int(pu.remove_empty_elements(pu.remove_newline(fp.readline().split(" "))), divide_factor))
+
+        header["times_l"]   = times_int
+        # header["cycles_l"]  = cycles_int
+
+        header["elapsed_time"]  = stat.median(times_int)
+        # header["cycle"]         = stat.median(cycles_int)
+
+        # if timer_config == "nanobench":
+        #   zeroes_everywhere = True
+        #   for e in cycles_int:
+        #     if e != 0:
+        #       zeroes_everywhere = False
+        #       break
+        #   if zeroes_everywhere:
+        #     print("INPUT ERROR: (every cpu_cycle) == 0, when using Nanobench, you need to run the benchmark with admin rights: sudo -E ./lorentz-euler_....exe")
+        #     print("             for file: " + path)
+        #     exit(-1)
+
         bench_list.append(header)
         # print(header)
     
@@ -466,19 +491,54 @@ if is_slice_algorithm():
 
   # TODO: slice a constant field? (maybe not very interesting?)
 
-  acts_kiwaku_inline_list   = slice_load_file("slice/plot/data3/slice_kiwaku_inline_blop-debian11_step1000.txt")
-  acts_kiwaku_noinline_list = slice_load_file("slice/plot/data3/slice_kiwaku_noinline_blop-debian11_step1000.txt")
-  acts_standalone_list      = slice_load_file("slice/plot/data3/slice_standalone_opti_blop-debian11_step1000.txt")
+  # acts_kiwaku_inline_list   = slice_load_file("slice/plot/data3/slice_kiwaku_inline_blop-debian11_step1000.txt")
+  # acts_kiwaku_noinline_list = slice_load_file("slice/plot/data3/slice_kiwaku_noinline_blop-debian11_step1000.txt")
+  # acts_standalone_list      = slice_load_file("slice/plot/data3/slice_standalone_opti_blop-debian11_step1000.txt")
 
+  kiwaku_inline_list   = slice_load_file("output_bench/slice_standalone_generic_step1000.txt")
+  kiwaku_noinline_list = slice_load_file("output_bench/slice_standalone_generic_step1000.txt")
+  standalone_list      = slice_load_file("output_bench/slice_standalone_generic_step1000.txt")
 
   # ERROR CHECKING (with tolerance)
-  pu.check_same_results(acts_standalone_list, acts_standalone_list, "check_value", check_value_tolerance)
-  pu.check_same_results(acts_standalone_list, acts_kiwaku_inline_list, "check_value", check_value_tolerance)
-  pu.check_same_results(acts_standalone_list, acts_kiwaku_noinline_list, "check_value", check_value_tolerance)
+  pu.check_same_results(standalone_list, standalone_list, "check_value", check_value_tolerance)
+  pu.check_same_results(standalone_list, kiwaku_inline_list, "check_value", check_value_tolerance)
+  pu.check_same_results(standalone_list, kiwaku_noinline_list, "check_value", check_value_tolerance)
 
-  ldiff0 = pu.make_diff_list(acts_standalone_list, acts_standalone_list, "elapsed_time_us")
-  ldiff1 = pu.make_diff_list(acts_standalone_list, acts_kiwaku_inline_list, "elapsed_time_us")
-  ldiff2 = pu.make_diff_list(acts_standalone_list, acts_kiwaku_noinline_list, "elapsed_time_us")
+
+
+  compare_to_list = None
+  if plot_diff:
+    compare_to_list = standalone_list
+
+  if plot_cycles_instead_of_time:
+    violin_keyword = "times_l"
+    plot_keyword   = "elapsed_time"
+    # violin_keyword = "cycles_l"
+    # plot_keyword = "cycle"
+  else:
+    violin_keyword = "times_l"
+    plot_keyword   = "elapsed_time"
+
+  # if plot_diff:
+  pu.draw_violin_plot("grey", pu.make_violin_plot_list(standalone_list, violin_keyword, compare_to_list))
+  pu.draw_violin_plot("blue", pu.make_violin_plot_list(kiwaku_inline_list, violin_keyword, compare_to_list))
+  pu.draw_violin_plot("maroon", pu.make_violin_plot_list(kiwaku_noinline_list, violin_keyword, compare_to_list))
+
+
+  if plot_diff:
+    ldiff0 = pu.make_diff_list(compare_to_list, standalone_list, plot_keyword)
+    ldiff1 = pu.make_diff_list(compare_to_list, kiwaku_inline_list, plot_keyword)
+    ldiff2 = pu.make_diff_list(compare_to_list, kiwaku_noinline_list, plot_keyword)
+  else:
+    ldiff0 = pu.make_absolute_list(standalone_list, plot_keyword)
+    ldiff1 = pu.make_absolute_list(kiwaku_inline_list, plot_keyword)
+    ldiff2 = pu.make_absolute_list(kiwaku_noinline_list, plot_keyword)
+
+  max_y_value = max([max(ldiff0), max(ldiff1), max(ldiff2)])
+
+  # ldiff0 = pu.make_diff_list(acts_standalone_list, acts_standalone_list, "elapsed_time")
+  # ldiff1 = pu.make_diff_list(acts_standalone_list, acts_kiwaku_inline_list, "elapsed_time")
+  # ldiff2 = pu.make_diff_list(acts_standalone_list, acts_kiwaku_noinline_list, "elapsed_time")
 
   def make_1D_ticks(ticks_number):
     res = []
@@ -493,7 +553,7 @@ if is_slice_algorithm():
     return res
 
   # ptotal_1D   = make_1D_ticks(len(acts_covfie_list))
-  ptotal_1D   = pu.make_1D_list_every_auto(acts_standalone_list, "z_value")
+  ptotal_1D   = pu.make_1D_list_every_auto(standalone_list, "z_value")
 
   # range(1, len(ldiff)+1) #make_1D_list_every(lorentz_covfie_list, "ptotal", 3)
 
@@ -517,11 +577,19 @@ if is_slice_algorithm():
 
 
   # plt.ylabel('Elapsed time (µs)')
-  plt.ylabel('Relative duration (%), lower is better')
+
+  if plot_diff:
+    plt.ylabel('Relative duration (%), lower is better')
+  else:
+    if plot_cycles_instead_of_time:
+      plt.ylabel('CPU cycles in billions (1e9)')
+    else:
+      plt.ylabel('Elapsed time in milliseconds')
+
   plt.xlabel('Z-value')
   plt.legend()
 
-  plt.ylim([0, 110]) # TODO: check max value in each curve and add 15%
+  plt.ylim([0, max_y_value * 1.15]) # check max value in each curve and add 15%
 
   output_image_name = "slice_" + computer_name + "_" + "ACTS_magnetic_field" + ".bench.png"
 
