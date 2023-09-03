@@ -42,7 +42,7 @@ If you are using vscode, you can add this to your `.vscode/c_cpp_properties.json
 ```bash
 cd code/acts_chep23/
 
-export CPP_COMPILER="clang++-12"
+export CPP_COMPILER="clang++-18"
 export KIWAKU_INCLUDE_DIR="/home/data_sync/academique/These/kiwaku_2023/kiwaku/include/"
 
 # Compiling the Lorentz-Euler standalone code

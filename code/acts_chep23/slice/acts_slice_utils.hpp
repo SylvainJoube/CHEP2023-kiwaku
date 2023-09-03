@@ -22,14 +22,14 @@ namespace acts_slice
       // float istart = offset + 15000;
       // float istop  = istart + 1;
 
-      std::string output_fname = base_log_path + "_" + program_args::computer_name_str + "_step" + std::to_string(step) + ".txt";
+      std::string output_fname = base_log_path + "_" + program_args::computer_name_str + "_step" + std::to_string(step) + ".bench.txt";
 
       print::line("Will output to file:  " + output_fname);
       print::line("In directory:         " + std::filesystem::current_path().string() + "/output_bench");
       print::line("");
 
       write_f.open("output_bench/" + output_fname);
-      write_f << "1\n";
+      write_f << "2\n";
 
       for (float i = istart; i < istop; i += step) {
         fct(i);

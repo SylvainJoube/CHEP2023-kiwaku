@@ -31,3 +31,5 @@ __pycache__
 
 *.bench.png
 *.bench.txt
+
+output_image/

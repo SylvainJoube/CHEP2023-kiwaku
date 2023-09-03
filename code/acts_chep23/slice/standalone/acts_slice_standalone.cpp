@@ -1,8 +1,8 @@
 #include <iostream>
 #include <cstddef>
-#include <fstream>
-#include <vector>
-#include <memory>
+// #include <fstream>
+// #include <vector>
+// #include <memory>
 #include <cmath>
 #include <chrono>
 #include "bitmap_standalone.hpp"
@@ -19,43 +19,6 @@
 #include "../../global_variables.hpp"
 
 #include "bitmap_standalone.hpp"
-
-// joube@ls-cassidi:~/shared/covfie-stephen$ cmake --build build -- -j $(nproc) && build/examples/cpu/render_slice_cpu --input atlas.cvf --output my_image.bmp --z 0
-
-
-// using field_t1 =
-// covfie::field : une table
-// covfie::backend::affine : backend (owning data)
-// covfie::backend::linear : interpolation linéaire des coordonnées
-// covfie::backend::strided : qui a un stride comme nos tables et vues
-// covfie::vector::ulong3 : en 3D
-// covfie::backend::array<covfie::vector::float3>> : dont chaque cellule est une structure constituée de 3 floats
-
-// using field_t1 = covfie::field<covfie::backend::affine<
-//       covfie::backend::linear<covfie::backend::strided<
-//       covfie::vector::ulong3,
-//       covfie::backend::array<covfie::vector::float3>>>>>;
-
-/*
-C'est un array<float3>
-qui est strided avec 3 dimensions (ulong3)
-qui a une interpolation linéaire des coordonnées
-qui subit une transformation affine sur ses coordonnées
-encapsulé par un covfie::field.
-
-Lecture du fichier dans cet ordre :
-- (dim est supposé connu, le nombre de dimensions du stride)
-- lecture de la transformation affine ((dim)*(dim+1)*sizeof(float))
-- lecture des tailles des (dim) dimensions
-- lecture du nombre d'éléments total (devrait être dim1*dim2*...*dimN)
-- puis ce sont les éléments les uns à la suite des autres
-
-Commande pour relancer l'exemple :
-cmake --build build -- -j $(nproc) && build/examples/cpu/render_slice_cpu --input atlas.cvf --output my_image.bmp --z 0
-
-$ clang++-15 acts_field_standalone.cpp bitmap.cpp -o exe -O3 -std=c++20 && ./exe
-*/
-
 
 
 acts_slice::bench_result_single render_slice_iteration(float z_value, acts_data_t& a, bool save_image)
@@ -91,8 +54,6 @@ acts_slice::bench_result_single render_slice_iteration(float z_value, acts_data_
     }
   }
 
-  double elapsed_time = chrono.ElapsedTime();
-
   // Checking image integrity
   std::uint64_t int_chk = 0;
   for (std::size_t x = 0; x < image_width; ++x) {
@@ -100,6 +61,8 @@ acts_slice::bench_result_single render_slice_iteration(float z_value, acts_data_
       int_chk += static_cast<std::uint8_t>(img[image_height * x + y]); //img[image_height * x + y]
     }
   }
+
+  double elapsed_time = chrono.ElapsedTime();
 
   /*
   Structure du fichier (texte) :
@@ -120,7 +83,6 @@ acts_slice::bench_result_single render_slice_iteration(float z_value, acts_data_
   if (save_image)
   {
     std::string img_path = "output_image/slice_standalone_" + std::to_string(static_cast<int>(z_value/100)) + ".bmp";
-
     // a.print_extremums();
     render_bitmap(
           img,//.get(),
@@ -128,13 +90,9 @@ acts_slice::bench_result_single render_slice_iteration(float z_value, acts_data_
           image_height,
           img_path
       );
-
   }
   delete[] img;
-
   return res;
-
-
 }
 
 void render_slice(float z_value)
@@ -144,7 +102,7 @@ void render_slice(float z_value)
 
   acts_slice::bench_result_single r;
   std::uint64_t int_chk;
-  std::vector<std::size_t> times;
+  std::vector<std::size_t> times; // measured times, microseconds
   for (std::size_t i = 0; i < program_args::iteration_count; ++i)
   {
     r = render_slice_iteration(z_value, a, (i == 0));
@@ -171,22 +129,22 @@ void render_slice(float z_value)
   write_f
   << z_value << " " 
   << int_chk << "\n";
-  for (auto e : times.size())
+  for (auto e : times)
   {
-    write_f << e << 
- 
+    write_f << e << " ";
   }
+  write_f << "\n";
 
-  double moy_elapsed_s = 0;
-  if (times_s.size() != 0){
-    for (std::size_t i = 0; i < times_s.size(); ++i) {
-      moy_elapsed_s += times_s[i];
+  double moy_elapsed_us = 0;
+  if (times.size() != 0){
+    for (std::size_t i = 0; i < times.size(); ++i) {
+      moy_elapsed_us += times[i];
     }
-    moy_elapsed_s /= times_s.size();
+    moy_elapsed_us /= times.size();
   }
 
   print::str(print::pad_right(z_value, 8));
-  print::str(print::pad_right(static_cast<std::size_t>(elapsed_time * 1000), 10));
+  print::str(print::pad_right(static_cast<std::size_t>(moy_elapsed_us / 1000), 10));
   print::line("");
 
 }
@@ -201,7 +159,7 @@ int main(int argc, char** argv)
 
   printer_t::line("Elapsed time, milliseconds:");
   print::str(print::pad_right("z_value", 8));
-  print::str(print::pad_right("time", 10));
+  print::str(print::pad_right("time(ms)", 10));
   print::line("");
 
   // if (program_args::bench_field_acts) 
